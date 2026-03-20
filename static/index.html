@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baseball Statistics</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <h1 class="logo">⚾ Baseball Stats</h1>
+            <p class="tagline">Historical Baseball Data Analysis</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="hero">
+            <h2>Explore Baseball History</h2>
+            <p>Select a year to view team statistics and performance data</p>
+        </section>
+
+        <section class="controls">
+            <div class="filter-group">
+                <label for="year-select" class="filter-label">Select Year:</label>
+                <select id="year-select" class="year-dropdown">
+                    <option value="">Loading years...</option>
+                </select>
+            </div>
+        </section>
+
+        <section id="data-section" class="data-section" style="display: none;">
+            <h3>Teams in Year</h3>
+            <div id="teams-container">
+                <p>Loading teams...</p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2026 Baseball Statistics. All rights reserved.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
