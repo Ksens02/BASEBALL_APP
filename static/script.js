@@ -151,11 +151,29 @@ async function loadRoster(year, teamId, teamName) {
         let rosterHTML = '<div class="players-grid">';
         players.forEach(player => {
             const fullName = `${player.first_name || 'Unknown'} ${player.last_name || 'Unknown'}`.trim();
-            rosterHTML += `<div class="player-card"><span class="player-name">${fullName}</span></div>`;
+            rosterHTML += `<div class="player-card" data-player-id="${player.player_id}" data-player-name="${fullName}"><span class="player-name">${fullName}</span></div>`;
         });
         rosterHTML += '</div>';
 
         rosterContainer.innerHTML = rosterHTML;
+
+        // Add click event listeners to player cards
+        rosterContainer.addEventListener('click', async (event) => {
+            const playerCard = event.target.closest('.player-card');
+            if (!playerCard) return;
+            
+            const playerId = playerCard.getAttribute('data-player-id');
+            const playerName = playerCard.getAttribute('data-player-name');
+            
+            console.log('Player clicked:', playerId, playerName);
+            
+            // Highlight selected player
+            document.querySelectorAll('.player-card').forEach(card => card.classList.remove('active'));
+            playerCard.classList.add('active');
+            
+            // Load and display player details
+            await loadPlayerDetails(playerId, playerName);
+        });
 
     } catch (error) {
         console.error('Error loading roster:', error);
@@ -163,6 +181,143 @@ async function loadRoster(year, teamId, teamName) {
         rosterContainer.innerHTML = '<p>Error loading roster.</p>';
     }
 }
+
+// Fetch and display player details with career stats
+async function loadPlayerDetails(playerId, playerName) {
+    try {
+        const detailColumn = document.getElementById('player-detail-column');
+        const detailContainer = document.getElementById('player-detail-container');
+
+        // Show detail section
+        detailColumn.style.display = 'block';
+        detailContainer.innerHTML = '<p class="loading">Loading player details...</p>';
+
+        const response = await fetch(`/player/${playerId}`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch player details');
+        }
+        const data = await response.json();
+
+        if (data.error) {
+            detailContainer.innerHTML = '<p>Player details not found.</p>';
+            return;
+        }
+
+        const player = data.player;
+        const careerStats = data.career_stats;
+        const calcStats = data.calculated_stats;
+
+        // Format birth date
+        let birthDate = '';
+        if (player.birth_year) {
+            birthDate = player.birth_year;
+            if (player.birth_city) {
+                birthDate += ` in ${player.birth_city}`;
+            }
+            if (player.birth_state) {
+                birthDate += `, ${player.birth_state}`;
+            }
+        }
+
+        // Create player details HTML
+        let detailHTML = `
+            <div class="player-detail-card">
+                <div class="player-header">
+                    <h2>${player.first_name} ${player.last_name}</h2>
+                </div>
+                
+                <div class="player-bio">
+                    <div class="bio-section">
+                        <h4>Basic Information</h4>
+                        <div class="bio-grid">
+                            ${birthDate ? `<p><strong>Born:</strong> ${birthDate}</p>` : ''}
+                            ${player.height ? `<p><strong>Height:</strong> ${player.height} in</p>` : ''}
+                            ${player.weight ? `<p><strong>Weight:</strong> ${player.weight} lbs</p>` : ''}
+                            ${player.bats ? `<p><strong>Bats:</strong> ${player.bats}</p>` : ''}
+                            ${player.throws ? `<p><strong>Throws:</strong> ${player.throws}</p>` : ''}
+                            ${player.debut ? `<p><strong>Major League Debut:</strong> ${player.debut}</p>` : ''}
+                            ${player.final_game ? `<p><strong>Final Game:</strong> ${player.final_game}</p>` : ''}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="player-stats">
+                    <h4>Career Batting Statistics</h4>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Games</div>
+                            <div class="stat-value">${careerStats.G}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">At Bats</div>
+                            <div class="stat-value">${careerStats.AB}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Hits</div>
+                            <div class="stat-value">${careerStats.H}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Avg</div>
+                            <div class="stat-value">${calcStats.batting_average}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Runs</div>
+                            <div class="stat-value">${careerStats.R}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">RBIs</div>
+                            <div class="stat-value">${careerStats.RBI}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Home Runs</div>
+                            <div class="stat-value">${careerStats.HR}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">OBP</div>
+                            <div class="stat-value">${calcStats.obp}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">SLG</div>
+                            <div class="stat-value">${calcStats.slg}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Doubles</div>
+                            <div class="stat-value">${careerStats.doubles}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Triples</div>
+                            <div class="stat-value">${careerStats.triples}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Walks</div>
+                            <div class="stat-value">${careerStats.BB}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Strikeouts</div>
+                            <div class="stat-value">${careerStats.SO}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Stolen Bases</div>
+                            <div class="stat-value">${careerStats.SB}</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Hit By Pitch</div>
+                            <div class="stat-value">${careerStats.HBP}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        detailContainer.innerHTML = detailHTML;
+
+    } catch (error) {
+        console.error('Error loading player details:', error);
+        const detailContainer = document.getElementById('player-detail-container');
+        detailContainer.innerHTML = '<p>Error loading player details.</p>';
+    }
+}
+
 
 // Handle year selection
 document.addEventListener('DOMContentLoaded', () => {
@@ -178,5 +333,13 @@ document.addEventListener('DOMContentLoaded', () => {
             dataSection.querySelector('h3').textContent = `Teams for ${selectedYear}`;
             loadTeams(selectedYear);
         }
+    });
+
+    // Close player detail view
+    const closePlayerBtn = document.getElementById('close-player-btn');
+    closePlayerBtn.addEventListener('click', () => {
+        const detailColumn = document.getElementById('player-detail-column');
+        detailColumn.style.display = 'none';
+        document.querySelectorAll('.player-card').forEach(card => card.classList.remove('active'));
     });
 });
